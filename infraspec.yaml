@@ -1,0 +1,74 @@
+language: go
+team: tbd
+deploy:
+  pipeline: harbor
+  chart: default
+  group: app
+  environments:
+  - name: production
+    disabled: true # comment this out when you are ready to push to production
+    releaseStrategy:
+      branch: main
+      tagFormat: semver
+  - name: staging
+    disabled: true # comment this out when you are ready to push to staging
+    releaseStrategy:
+      branch: main
+  deployLocations:
+  - provider: gcp
+    region: us-central1
+  - provider: gcp
+    region: us-east4
+roles:
+  webserver:
+    command: /usr/local/bin/tempest-template webserver
+    health:
+      livenessProbe:
+        endpoint: /health/live
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 3
+        timeoutSeconds: 1
+      readinessProbe:
+        endpoint: /health/ready
+        periodSeconds: 10
+        successThreshold: 3
+        failureThreshold: 1
+        timeoutSeconds: 1
+    replicaCount: 2
+#   autoscale:  # alternative to replicaCount
+#     enabled: true
+#     maxReplicas: 5
+#     minReplicas: 2
+#     threshold: 60
+#     trigger: RPS
+    resources:
+      cpu: 50m
+      memory: 100M
+    telemetry:
+      graphite:
+        enabled: true
+      honeycomb:
+        enabled: true
+datastores:
+  cloudSql:
+    - name: tempest-template
+      configVar: PSQL_URL
+      size:
+        storage: 20 GB
+        ram: 2 GB
+      locations:
+        - region: us-central1
+  kafka:
+    topics:
+      - name: tempest-template-default
+        configVar: KAFKA_TEMPEST_TEMPLATE_DEFAULT
+        topicSubscriptions:
+          - topicName: stg.bus.tempest-template.v1.crud.backend-default
+            locations:
+              - environments:
+                  - staging
+          - topicName: prd.bus.tempest-template.v1.crud.backend-default
+            locations:
+              - environments:
+                  - production

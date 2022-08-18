@@ -1,0 +1,17 @@
+#Template for service docs using autocomplete (first 2 docs/section are always needed)
+#check Beholder readme to add Application healthchecks(https://github.com/shipt/beholder/blob/master/README.md)
+---
+Service:
+  #update the repo with the service repo name
+  #e.g repo: tempest-template
+  repo:
+    #update the region to which service is deployed from us-east-1, us-west-2, us-central1, us-east4
+  region:
+#    - us-central1
+  # slackchannel: "pass the channel id to get the errors from beholder which it gets"
+---
+#Healtcheck setup
+Healthcheck:
+  url: /health/live
+  validation: 
+    statusCode: 204

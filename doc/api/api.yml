@@ -1,0 +1,184 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Tempest-Template API Documentation
+  description: |
+    # Introduction
+    The tempest-template project implements a simple CRUD API for Customers.  The API and accompanying documentation are meant to serve as a guide for how to get started with a new Go service at Shipt.        
+
+    # Response Codes
+
+    The tempest-template API uses standard [HTTP Status Codes](https://www.restapitutorial.com/httpstatuscodes.html) in service responses to indicate the outcome of a request.
+
+    | Code | Text | Description |
+    | --- | --- | --- |
+    | 200 | OK | The request was processed successfully. |
+    | 201 | Created | A new entity was created successfully. |
+    | 400 | Bad Request | The payload sent to the server could not be parsed or read. |
+    | 404 | Not Found | The requested entity was not found. |
+    | 422 | Unprocessable Entity | The request was well formed but failed validation. For example, the request excluded required parameters. |
+    | 500 | Internal Server Error | The client request was valid but the server was unable to successfully process it. |
+
+    ## Errors
+
+    When returning a non-2xx level response the service will return an error message in the following format:
+    ```
+      {
+        "error": {
+          "type": "some type"
+          "message": "some error message"
+        }
+      }
+    ```
+
+    The `message` field in the error response is optional.
+
+    ## Response Formats
+
+    The Tempest-Template API returns JSON encoded data.
+
+tags:
+  - name: Customers
+    description: |
+      A simple API for creating and retrieving Customers.
+paths:
+  /v1/customers/{customer_id}:
+    get:
+      tags:
+        - "Customers"
+      summary: "Retrieve a Customer"
+      description: |
+        Retrives the details of an existing Customer.
+
+        ### Error Codes
+        * `resource_not_found` - the requested Customer doesn't exist
+      parameters:
+        - name: customer_id
+          schema:
+            type: string
+          in: path
+          description: A customer ID
+          required: true
+      responses:
+        200:
+          description: The customer object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/ServerError"
+    x-code-samples:
+      - lang: curl
+        source: |
+          curl -X GET \
+            'http://localhost:8080/v1/customers/1'
+  /v1/customers/:
+    post:
+      tags:
+        - "Customers"
+      summary: "Create a Customer"
+      description: |
+        Create a new customer.
+
+        ### Error Codes
+        * `customer_email_already_exists` - a customer with the requested email address already exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+      responses:
+        201:
+          description: The customer was created successfully.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: A link to the new customer object.
+        400:
+          $ref: "#/components/responses/BadRequest"
+        422:
+          $ref: "#/components/responses/UnprocessableEntity"
+        500:
+          $ref: "#/components/responses/ServerError"
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST \
+              'http://localhost:8080/v1/customers/'
+components:
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: NotFound
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          properties:
+            type:
+              type: string
+              description: Error code for the error
+            message:
+              type: string
+              description: Message indicating the reason for the error
+    CreateCustomerRequest:
+      type: object
+      properties:
+        email:
+          description: The customer's email address.
+          type: string
+        first_name:
+          description: The customer's first name.
+          type: string
+        last_name:
+          description: The customer's last name.
+          type: string
+      required:
+        - email
+        - first_name
+        - last_name
+    Customer:
+      type: object
+      properties:
+        id:
+          description: Unique identifier for the object.
+          type: string
+        email:
+          description: The customer's email address.
+          type: string
+        first_name:
+          description: The customer's first name.
+          type: string
+        last_name:
+          description: The customer's last name.
+          type: string

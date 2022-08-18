@@ -1,0 +1,78 @@
+asyncapi: '2.0.0'
+info:
+  title: Tempest-Template Async Event Docs
+  version: '1.0.0'
+  description: |
+    The tempest-template project implements a simple CRUD API for Customers, but doesn't publish any Kafka events. If your project does
+    plan to do that editing these docs may be helpful to allow consumers to see the topics and payloads available.
+
+    ### Markdown formatting with a list:
+
+    * Foo 🌃
+    * Bar 😎
+    * Baz 📈
+
+  termsOfService: http://asyncapi.org/terms/
+  contact:
+    name: API Support
+    url: http://www.asyncapi.org/support
+    email: support@asyncapi.org
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+defaultContentType: application/json
+
+servers:
+  dummy-kafka:
+    url: http://localhost:{port}
+    protocol: kafka
+    description: dummy Kafka broker
+    variables:
+      port:
+        default: '9092'
+
+channels:
+  bus.tempest-template.v1.customers:
+    subscribe:
+      message:
+        $ref: "#/components/messages/CustomerEvent"
+
+components:
+  messages:
+    CustomerEvent:
+      summary: |
+        Customer related event in the system.
+      payload:
+        type: object
+        properties:
+          message_type:
+            type: string
+            enum:
+              - created
+          message_sent_at:
+            type: string
+            format: date-time
+          data:
+            type: object
+            properties:
+              current:
+                $ref: "#/components/schemas/Customer"
+              previous:
+                $ref: "#/components/schemas/Customer"
+
+  schemas:
+    Customer:
+      type: object
+      properties:
+        id:
+          description: Unique identifier for the customer.
+          type: string
+        email:
+          description: The customer's email address.
+          type: string
+        first_name:
+          description: The customer's first name.
+          type: string
+        last_name:
+          description: The customer's last name.
+          type: string

@@ -1,0 +1,11 @@
+# build artifacts
+bin
+debug
+main
+
+# config artifacts
+.env.json
+
+# editor/ide stuff
+.vscode/
+.idea/

@@ -1,0 +1,41 @@
+version: "2.1"
+
+services:
+  database:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: tempest-template
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pgpass
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "tempest-template", "-h", "localhost", "-U", "pguser" ]
+      timeout: 10s
+      interval: 2s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    command: -database postgres://pguser:pgpass@database:5432/tempest-template?sslmode=disable -path /migrations up
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1

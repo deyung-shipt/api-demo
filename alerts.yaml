@@ -1,0 +1,124 @@
+# # Pleas check https://github.com/shipt/lookout for more info 
+# sqs:
+#   - name: "queue name"
+#     metric: "NumberOfMessagesReceived"
+#     threshold: 100
+#     period: 60 
+#     comparison: "GreaterThanThreshold/GreaterThanOrEqualToThreshold/LessThanOrEqualToThreshold/LessThanThreshold"
+#     datapoints: "3/5" 
+#     stats: "Average/Sum/Minimum/Maximum" 
+#     priority: "p3"  
+#     team: "site-reliability" 
+#     region: ["us-east-1", "us-west-2"] 
+#     runbook: "link to runbook if you have"
+# elasticsearch:
+#   - name: "node name"
+#     metric: "CPUUtilization"
+#     comparison: "GreaterThanThreshold"
+#     threshold: 85
+#     period: 300
+#     datapoints: "3/5"
+#     stats: "Average"
+#     priority: "p3"
+#     team: "site-reliability"
+#     region: ["us-east-1"]
+# redis:
+#   - name: "node name"
+#     metric: "CPUUtilization"
+#     comparison: "GreaterThanThreshold"
+#     threshold: 90
+#     period: 300
+#     datapoints: "3/5"
+#     stats: "Average"
+#     priority: "P3"
+#     team: "site-reliability"
+#     region: ["us-east-1", "us-west-2"]
+# dynamodb:
+#   - name: "table name"
+#     metric: "WriteThrottleEvents"
+#     comparison: "GreaterThanThreshold"
+#     threshold: 20 
+#     datapoints: "3/5"
+#     period: 60
+#     stats: "Sum"
+#     priority: "p3"
+#     team: "site-reliability"
+#     region: 
+# rds:
+#   - name: "DB name"
+#     metric: "CPUUtilization"
+#     comparison: "GreaterThanThreshold"
+#     threshold: 70
+#     datapoints: "3/5"
+#     period: 60
+#     stats: "Average"
+#     priority: "p3"
+#     team: "site-reliability"
+#     region:
+#       - "us-east-1"
+# custom:
+#   - name: "name"
+#     metric: "Jobs"
+#     threshold: 50
+#     comparison: "GreaterThanThreshold"
+#     stats: "Sum"
+#     region: ["us-east-1"]
+#     priority: "p3"
+#     team: "site-reliability"
+#     dimension:      #get the dimension from cloudwatch metrics
+#       - name: "Queue"
+#         value: "algolia"
+#     namespace: "Staging-SidekiqQueues"  #get it from cloudwatch metrics
+#     datapoints: "3/5"
+# medic:
+#   - heartbeatname: "Name of heartbeat"
+#     environment: "production/staging"
+#     alertinterval: 60
+#     team: "site-reliability"
+#     priority: "p3"
+#     threshold: 1
+# prometheus:
+#   - name: "Name of the prometheus alert"
+#     expression: "Prometheus expression for the alert"
+#     period: "10m"
+#     team: "site-reliability"
+#     priority: "p1 or p3"
+#     region: ["us-east-1", "us-east-2"]
+#     runbook: ""
+# Please ensure your project exists in Rollbar and have configured a Webhook for the project and an Opsgenie Rollbar integration has been created for the project. Use naming convention team-name-priority-rollbar e.g(search-engineering-p3-rollbar) when creating the Rollbar integration in Opsgenie. Please reach out to #ask-site-reliability channel for any queries regarding the setting up webhook or creating the rollbar integration in Opsgenie
+# rollbar:
+#   - title: "Entire string or substring of the error message"
+#     counter: #123 Refers to error counter number in Rollbar for the specific error message e.g: https://rollbar.com/ShiptLLC/shipt-elasticsearch-products/items/159/ where 159 is the counter
+#     environment: ["staging", "production"]
+#     priority: "p3"
+#     team: "site-reliability"
+#   - title: "Entire string or substring of the error message"
+#     counter: 123 #Refers to error counter number in Rollbar for the specific error message e.g: https://rollbar.com/ShiptLLC/shipt-elasticsearch-products/items/159/ where 159 is the counter
+#     environment: ["staging", "production"]
+#     priority: "p3"
+#     team: "site-reliability"
+#     threshold: 10 #Refers to number of times the error has to occur before firing the alert
+#     duration: 300 #Refers the window period in seconds within which the number of times the error must occur(threshold) for alert to fire
+#service:
+#  - name: "production-5xx"
+#    type: "5xx"
+#    comparison: "GreaterThanThreshold"
+#    period: "5m"
+#    threshold: 0.3
+#    team: your-team
+#    priority: p1
+#    region:
+#      - "us-east-1"
+#    environment:
+#      - "production"
+#  - name: "staging-5xx"
+#    type: "5xx"
+#    comparison: "GreaterThanThreshold"
+#    period: "5m"
+#    threshold: 0.3
+#    team: your-team
+#    priority: p3
+#    region:
+#      - "us-east-1"
+#    environment:
+#      - "staging"

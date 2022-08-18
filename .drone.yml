@@ -1,0 +1,118 @@
+kind: pipeline
+name: test
+
+trigger:
+  event:
+    - tag
+    - push
+    - pull_request
+
+workspace:
+  base: /go
+  path: src/github.com/shipt/${DRONE_REPO_NAME}
+
+staging-trigger: &staging-trigger
+  when:
+    event: push
+    branch: main
+
+production-trigger: &production-trigger
+  when:
+    event: tag
+    ref: refs/tags/v*
+
+apply-migrations: &apply-migrations
+  image: migrate/migrate
+  commands:
+    - migrate -database "$PSQL_URL" -path migrations up
+
+steps:
+  - name: wait-for-svcs
+    image: appropriate/nc
+    commands:
+      - timeout -t 60 sh -c 'until nc -vz postgres 5432; do sleep 0.25; done'
+
+  - name: lint
+    image: golang:1.16
+    commands:
+      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin $GOLANGCI_LINT_VERSION
+      - go build ./...
+      - golangci-lint run
+
+  - name: migrations
+    image: golang:1.16
+    environment:
+      PSQL_URL: postgresql://pguser:pgpass@postgres:5432/tempest-template?sslmode=disable
+    <<: *apply-migrations
+
+  - name: test
+    image: golang:1.16
+    commands:
+      - make test
+    environment:
+      PSQL_URL: postgres://pguser:pgpass@postgres:5432/tempest-template?sslmode=disable # drone use only
+
+  - name: scan
+    image: securego/gosec:2.11.0
+    commands:
+      - gosec -no-fail -fmt=sonarqube -out report.json ./...
+
+  - name: code-analysis
+    image: plugins/sonarqube-drone-plugin
+    environment:
+      SONAR_HOST:
+        from_secret: SONAR_HOST
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+
+  - name: migrations-staging
+    image: golang:1.16
+    <<: *staging-trigger
+    environment:
+      PSQL_URL:
+        from_secret: STAGING_DATABASE_URL
+    <<: *apply-migrations
+
+  - name: migrations-production
+    image: golang:1.16
+    <<: *production-trigger
+    environment:
+      PSQL_URL:
+        from_secret: PRODUCTION_DATABASE_URL
+    <<: *apply-migrations
+
+  - name: slack
+    pull: if-not-exists
+    image: plugins/slack
+    settings:
+      channel: shipt-it
+      webhook:
+        from_secret: slack_webhook
+    when:
+      status:
+        - success
+        - failure
+  
+  - name: docker-prep
+    image: harbor.shipttech.com/plugins/dockerspec
+    pull: always
+
+  - name: docker-build-and-push
+    image: plugins/docker
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    settings:
+      build_args_from_env:
+        - GITHUB_TOKEN
+      registry: harbor.shipttech.com
+      env_file: "docker_args"
+
+# this service is for drone purposes only... not for staging/migration DB stuff
+services:
+  - name: postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pgpass
+      POSTGRES_DB: tempest-template

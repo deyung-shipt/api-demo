@@ -1,0 +1,11 @@
+Dockerfile
+README.md
+.dockerignore
+.gitignore
+.drone.yml
+infraspec.yaml
+
+**/*~
+**/*.log
+**/.DS_Store
+**/Thumbs.db
